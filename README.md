@@ -1,8 +1,8 @@
 # Gaming Agent — Snake + Q-Learning
 
 ## Équipe
-- Nom de team : _à compléter_
-- Membres : _à compléter_
+- Nom de team : Snake gaming agent
+- Membres : Jokast; Serge; Herrmann; Rufus
 
 ## Le jeu
 Snake, implémenté à la main avec PyGame (grille 20x15 cases). Choisi car l'environnement
@@ -76,7 +76,7 @@ python evaluate.py --model runs/essai1/best_agent.pkl --episodes 20 --render
 Voir [NOTEBOOK.md](NOTEBOOK.md) pour l'historique des tentatives, y compris les échecs.
 
 ## Vidéo de présentation
-Lien : _à compléter_
+Lien : 
 
 ## Ce qu'on ferait avec plus de temps
-_à compléter_
+Faire un agent capable de jouer les échecs sur la plateforme: https://papergames.io/fr/jeu-d-echecs
