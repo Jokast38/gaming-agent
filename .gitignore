@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# poids, logs et courbes générés localement -> pas de lourd dans le repo
+runs/
+*.npy
+*.png
+*.mp4
+
+# éditeurs
+.vscode/
+.idea/
