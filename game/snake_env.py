@@ -74,13 +74,19 @@ class SnakeEnv:
                     self._pygame.quit()
                     quit()
 
+        prev_dist = abs(self.head.x - self.food.x) + abs(self.head.y - self.food.y)
+
         self._move(action)
         self.snake.insert(0, self.head)
 
         reward = 0
         done = False
 
-        if self._is_collision() or self.steps_since_food > self.max_steps_without_food:
+        # la limite de pas sans manger s'allonge avec la taille du serpent, sinon un
+        # serpent long n'a plus le temps de parcourir la grille pour trouver la nourriture
+        step_limit = self.max_steps_without_food + 20 * len(self.snake)
+
+        if self._is_collision() or self.steps_since_food > step_limit:
             done = True
             reward = -10
             if self.render_enabled:
@@ -95,6 +101,10 @@ class SnakeEnv:
         else:
             self.snake.pop()
             self.steps_since_food += 1
+            # reward shaping : petit bonus/malus selon qu'on se rapproche ou s'éloigne
+            # de la nourriture, pour aider l'agent tabulaire à naviguer
+            new_dist = abs(self.head.x - self.food.x) + abs(self.head.y - self.food.y)
+            reward = 1 if new_dist < prev_dist else -1
 
         if self.render_enabled:
             self._draw()
@@ -132,12 +142,16 @@ class SnakeEnv:
         self.head = Point(x, y)
 
     def get_state(self):
-        """État discret sous forme de 11 booléens (dangers, direction, position nourriture)."""
+        """État discret : dangers immédiats + à 2 cases, direction, position nourriture, taille."""
         head = self.head
         point_l = Point(head.x - 1, head.y)
         point_r = Point(head.x + 1, head.y)
         point_u = Point(head.x, head.y - 1)
         point_d = Point(head.x, head.y + 1)
+        point_l2 = Point(head.x - 2, head.y)
+        point_r2 = Point(head.x + 2, head.y)
+        point_u2 = Point(head.x, head.y - 2)
+        point_d2 = Point(head.x, head.y + 2)
 
         dir_l = self.direction == Direction.LEFT
         dir_r = self.direction == Direction.RIGHT
@@ -145,21 +159,36 @@ class SnakeEnv:
         dir_d = self.direction == Direction.DOWN
 
         state = [
-            # danger tout droit
+            # danger tout droit (1 case)
             (dir_r and self._is_collision(point_r))
             or (dir_l and self._is_collision(point_l))
             or (dir_u and self._is_collision(point_u))
             or (dir_d and self._is_collision(point_d)),
-            # danger à droite
+            # danger à droite (1 case)
             (dir_u and self._is_collision(point_r))
             or (dir_d and self._is_collision(point_l))
             or (dir_l and self._is_collision(point_u))
             or (dir_r and self._is_collision(point_d)),
-            # danger à gauche
+            # danger à gauche (1 case)
             (dir_d and self._is_collision(point_r))
             or (dir_u and self._is_collision(point_l))
             or (dir_r and self._is_collision(point_u))
             or (dir_l and self._is_collision(point_d)),
+            # danger tout droit (2 cases) : anticipation
+            (dir_r and self._is_collision(point_r2))
+            or (dir_l and self._is_collision(point_l2))
+            or (dir_u and self._is_collision(point_u2))
+            or (dir_d and self._is_collision(point_d2)),
+            # danger à droite (2 cases)
+            (dir_u and self._is_collision(point_r2))
+            or (dir_d and self._is_collision(point_l2))
+            or (dir_l and self._is_collision(point_u2))
+            or (dir_r and self._is_collision(point_d2)),
+            # danger à gauche (2 cases)
+            (dir_d and self._is_collision(point_r2))
+            or (dir_u and self._is_collision(point_l2))
+            or (dir_r and self._is_collision(point_u2))
+            or (dir_l and self._is_collision(point_d2)),
             # direction actuelle
             dir_l,
             dir_r,
@@ -170,6 +199,8 @@ class SnakeEnv:
             self.food.x > head.x,
             self.food.y < head.y,
             self.food.y > head.y,
+            # taille du serpent : au-delà d'un seuil, le risque de s'auto-enfermer augmente
+            len(self.snake) > 15,
         ]
         return np.array(state, dtype=int)
 

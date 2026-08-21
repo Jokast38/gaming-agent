@@ -1,7 +1,7 @@
-"""Entraîne l'agent Q-learning sur Snake et sauvegarde la meilleure Q-table.
+"""Entraîne l'agent DQN sur Snake et sauvegarde le meilleur modèle.
 
 Usage:
-    python train.py --episodes 1000 --run-name essai1
+    python train_dqn.py --episodes 1000 --run-name dqn_essai1
 """
 import argparse
 import json
@@ -10,19 +10,21 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from agent.q_learning import QLearningAgent
+from agent.dqn_agent import DQNAgent
 from game.snake_env import SnakeEnv
 
 
-def train(episodes=1000, run_name="run", seed=None, epsilon_decay=0.995):
+def train(episodes=1000, run_name="dqn_run", seed=None, epsilon_decay=0.995):
     if seed is not None:
         import random
+        import torch
 
         random.seed(seed)
         np.random.seed(seed)
+        torch.manual_seed(seed)
 
     env = SnakeEnv(render=False)
-    agent = QLearningAgent(epsilon_decay=epsilon_decay)
+    agent = DQNAgent(epsilon_decay=epsilon_decay)
 
     scores = []
     best_score = -1
@@ -35,7 +37,8 @@ def train(episodes=1000, run_name="run", seed=None, epsilon_decay=0.995):
         while not done:
             action = agent.choose_action(state)
             next_state, reward, done, score = env.step(action)
-            agent.update(state, action, reward, next_state, done)
+            agent.remember(state, action, reward, next_state, done)
+            agent.train_step()
             state = next_state
 
         agent.decay_epsilon()
@@ -43,13 +46,13 @@ def train(episodes=1000, run_name="run", seed=None, epsilon_decay=0.995):
 
         if score > best_score:
             best_score = score
-            agent.save(run_dir / "best_agent.pkl")
+            agent.save(run_dir / "best_agent.pt")
 
         if (ep + 1) % 50 == 0:
             avg = np.mean(scores[-50:])
             print(f"Episode {ep + 1}/{episodes} - score: {score} - moyenne(50): {avg:.2f} - epsilon: {agent.epsilon:.3f}")
 
-    agent.save(run_dir / "final_agent.pkl")
+    agent.save(run_dir / "final_agent.pt")
 
     with open(run_dir / "scores.json", "w") as f:
         json.dump(scores, f)
@@ -82,7 +85,7 @@ def _plot_curve(scores, out_path, run_name, window=50):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--episodes", type=int, default=1000)
-    parser.add_argument("--run-name", type=str, default="run")
+    parser.add_argument("--run-name", type=str, default="dqn_run")
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--epsilon-decay", type=float, default=0.995)
     args = parser.parse_args()
