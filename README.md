@@ -76,7 +76,7 @@ python evaluate.py --model runs/essai1/best_agent.pkl --episodes 20 --render
 Voir [NOTEBOOK.md](NOTEBOOK.md) pour l'historique des tentatives, y compris les échecs.
 
 ## Vidéo de présentation
-Lien : 
+Lien : https://testipformation-my.sharepoint.com/:v:/g/personal/s_donou_ecole-ipssi_net/IQDcwU1jTYMFS7of8b5v7yQEAVIB-t2QrNEGrxWCxX6oIZY?e=k2bmaj
 
 ## Ce qu'on ferait avec plus de temps
 Faire un agent capable de jouer les échecs sur la plateforme: https://papergames.io/fr/jeu-d-echecs
